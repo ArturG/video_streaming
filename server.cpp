@@ -15,22 +15,32 @@ int main(int argc, const char * argv[])
 {
   int sock;
   struct sockaddr_in addr;
-  double weight = 320;
-  double height = 240;
+  double weight = 800;
+  double height = 600;
   char windowName[] = "Server Camera";
   cv::Mat image = cv::Mat(weight, height, CV_8UC3);
-  int receiveSize = 8000;
+  int receiveSize = 65*1024;
   char buff[receiveSize];   
   int c;
   int received;
   vector<uchar> ibuff;
   
   sock = socket(AF_INET, SOCK_DGRAM, 0);
+    
   addr.sin_family = AF_INET;
   addr.sin_port = htons(9000);
   addr.sin_addr.s_addr = INADDR_ANY;
   addr.sin_len = sizeof(addr);
-       
+  
+  int n = 1024 * 1024;
+  if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &n, sizeof(n)) == -1) {
+    // deal with failure, or ignore if you can live with the default size
+  }
+
+  if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &n, sizeof(n)) == -1) {
+    // deal with failure, or ignore if you can live with the default size
+  }
+
   if( (::bind(sock, (struct sockaddr *)&addr, sizeof(addr)))<0){
     perror("socket");
     exit(EXIT_FAILURE);
@@ -46,7 +56,7 @@ int main(int argc, const char * argv[])
        
     if(received != -1)
     {
-      for(int i = 0; i < sizeof(buff); i++)
+      for(int i = 0; i < received; i++)
       {
         ibuff.push_back((uchar)buff[i]);
       }
